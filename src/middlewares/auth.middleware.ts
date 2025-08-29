@@ -112,3 +112,42 @@ export const validateLogin = (
   req.body = parsedBody.data;
   next();
 };
+
+export const validateTodo = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const requiredBody = z.object({
+    title: z
+      .string({ message: "Title of the todo is required. " })
+      .min(2, {
+        message: "Title of the todo should be at least 2 characters long.",
+      })
+      .max(100, {
+        message: "Title of the todo must be less than 100 characters.",
+      }),
+    description: z
+      .string({ message: "Description of the todo is required. " })
+      .min(2, {
+        message:
+          "Description of the todo should be at least 2 characters long.",
+      })
+      .max(255, {
+        message: "Description of the todo must be less than 255 characters.",
+      }),
+  });
+
+  const parsedBody = requiredBody.safeParse(req.body);
+
+  if (!parsedBody.success) {
+    return res.status(401).json({
+      status: false,
+      message: "Invalid data format.",
+      error: parsedBody.error.issues[0].message,
+    });
+  }
+
+  req.body.data = parsedBody.data;
+  next();
+};

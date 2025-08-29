@@ -93,7 +93,7 @@ export const fetchUser = async (req: Request, res: Response) => {
     if (!id) {
       return res.status(401).json({
         status: false,
-        message: "Missing or invalid token.",
+        message: "Access Denied.",
       });
     }
 
@@ -124,3 +124,72 @@ export const fetchUser = async (req: Request, res: Response) => {
   }
 };
 
+export const addTodo = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(401).json({
+        status: false,
+        message: "Access Denied.",
+      });
+    }
+
+    const { title, description } = req.body.data;
+
+    const query = await client.query(
+      `
+            INSERT INTO todos (user_id, title, description) VALUES ($1, $2, $3) RETURNING *
+        `,
+      [id, title, description]
+    );
+
+    res.status(201).json({
+      status: true,
+      message: "Todo successfully added with ID: " + query.rows[0].id,
+      todo: query.rows[0],
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      status: false,
+      message: "Error is adding todo: " + error.message,
+    });
+  }
+};
+
+export const getTodos = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(401).json({
+        status: false,
+        message: "Access Denied.",
+      });
+    }
+
+    const query = await client.query(
+      `
+            SELECT * FROM todos WHERE user_id = $1
+        `,
+      [id]
+    );
+
+    if (query.rows.length < 1) {
+      return res.status(404).json({
+        status: false,
+        message: "No todos found.",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      todos: query.rows,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      status: false,
+      message: "Error is fetching todos: " + error.message,
+    });
+  }
+};
